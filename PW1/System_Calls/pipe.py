@@ -1,38 +1,46 @@
-import os
+# Python program to explain os.pipe() method 
 
-def child(pipeout):
-  bottles = 99
-  while True:
-    bob = "bottles of beer"
-    otw = "on the wall"
-    take1 = "Take one down and pass it around"
-    store = "Go to the store and buy some more"
+# importing os module 
+import os 
 
-    if bottles > 0:
-      values =  (bottles, bob, otw, bottles, bob, take1, bottles - 1,bob,otw)
-      verse = "%2d %s %s,\n%2d %s.\n%s,\n%2d %s %s.\n" % values
-      os.write(pipeout, verse)
-      bottles -= 1
-    else:
-      bottles = 99
-      values =  (bob, otw, bob, store, bottles, bob,otw)
-      verse = "No more %s %s,\nno more %s.\n%s,\n%2d %s %s.\n" % values
-      os.write(pipeout, verse)
-def parent():
-    pipein, pipeout = os.pipe()
-    if os.fork() == 0:
-        os.close(pipein)
-        child(pipeout)
-    else:
-        os.close(pipeout)
-        counter = 1
-        pipein = os.fdopen(pipein)
-        while True: 
-            print("verse %s",counter)
-            for i in range(4):
-                verse = pipein.readline()[:-1]
-                print ("%s",verse)
-            counter += 1
-            print
 
-parent()
+# Create a pipe 
+r, w = os.pipe() 
+
+# The returned file descriptor r and w 
+# can be used for reading and 
+# writing respectively. 
+
+# We will create a child process 
+# and using these file descriptor 
+# the parent process will write 
+# some text and child process will 
+# read the text written by the parent process 
+
+# Create a child process 
+pid = os.fork() 
+
+# pid greater than 0 represents 
+# the parent process 
+if pid > 0: 
+
+	# This is the parent process 
+	# Closes file descriptor r 
+	os.close(r) 
+
+	# Write some text to file descriptor w 
+	print("Parent process is writing") 
+	text = b"Teste"
+	os.write(w, text) 
+	print("Written text:", text.decode()) 
+
+	
+else: 
+
+	# This is the parent process 
+	# Closes file descriptor w 
+	os.close(w) 
+	# Read the text written by parent process 
+	print("\nChild Process is reading") 
+	r = os.fdopen(r) 
+	print("Read text:", r.read()) 
