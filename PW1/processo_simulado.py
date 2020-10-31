@@ -1,17 +1,23 @@
+import threading
+
 class Processo_simulado:
-    def __init__(self):
+    def __init__(self, pc_inicial):
         self.vetor_memoria = []
-        self.pc = 0
+        self.pc = pc_inicial
         self.contador = [] #essa variavel garante que a posição da memória foi alocada e que também teve um valor atribuido a ela
 
+    def copia_dados(self, vetor, pc, contador):
+        self.vetor_memoria = vetor
+        self.pc = pc
+        self.contador = contador
 
-    def ler_arquivo_init(self, nome_arquivo, pc_inicial):
+    def ler_arquivo_init(self, nome_arquivo):
         with open(nome_arquivo, "r") as f:
             count_bloq = 0
             for line in f:
                 count_bloq+=1
 
-                if count_bloq < pc_inicial+1: #garante que o programa volte a executar a partir da instrução que parou
+                if count_bloq < self.pc + 1: #garante que o programa volte a executar a partir da instrução que parou
                     break
 
                 self.pc+=1
@@ -43,22 +49,28 @@ class Processo_simulado:
                 elif line[0] == 'B':
                     print("Bloqueia processo")
                     #manda o pc pra tabela processos
-                    #na hora que voltar tem que voltar com o nome do arquivo que tava executando e o contador de processos que terminou
+                    #na hora que voltar tem que voltar com o nome do arquivo que tava executando, o contador de processos que terminou e o estado atual 
+                    #do vetor de dados
                     #então tem que ter alguma coisa do tipo: return (nome_arquivo, self.pc)
                 elif line[0] == 'T':
+                    print(self.vetor_memoria)
                     print("Termina processo")
                     #matar o processo
                 elif line[0] == 'F':
-                    processo = Processo_simulado()
-                    processo.ler_arquivo_init()
+                    processo = Processo_simulado(0)
+                    processo.copia_dados(self.vetor_memoria, self.pc, self.contador)
+                    thread.start_new_thread(ler_arquivo_init, nome_arquivo) 
+
+                    index = int(line[1])
+                    count_bloq = self.pc
+                    self.pc = self.pc + self.vetor_memoria[index] #avança x instruções e começa a executar a partir delas
                 elif line[0] == 'R':
                     self.pc = 0
                     self.ler_arquivo_init(line[1])
                 else:
                     print("Arquivo com comando inválido")
                     break
-        print(self.vetor_memoria)
 
 
-a = Processo_simulado() 
-a.ler_arquivo_init("teste_processo.txt", 0)
+a = Processo_simulado(0) 
+a.ler_arquivo_init("teste_processo.txt")
