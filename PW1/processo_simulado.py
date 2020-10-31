@@ -70,6 +70,7 @@ class Processo_simulado:
                     elif line[0] == 'R':
                         self.pc = 0
                         self.ler_arquivo_init(line[1])
+                        break
                     else:
                         print("Arquivo com comando inválido")
                         break
