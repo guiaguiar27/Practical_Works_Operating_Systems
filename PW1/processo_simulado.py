@@ -67,9 +67,6 @@ class Cpu:
         elif line[0] == 'R':
             self.pc = 0
             self.vetor_instrucoes = self.le_instrucoes(line[1]) #substitui as instruções atuais pelas instruções no novo arquivo
-            aux = self.executa_funcao()
-            while aux[0] == 'N' | aux[0] == 'D' | aux[0] =='V': #substitui os valores da memoria atuais pelos valores presentes no novo arquivo
-                self.executa_funcao()
         else:
             print("Arquivo com comando inválido")
             exit
@@ -91,6 +88,7 @@ class Gerenciador:
         self.tempo_atual = 0
         self.cpu = Cpu(0 ,0, 0, 0, 0, 1)
         self.newProcess_0('teste_processo.txt')
+        self.processo_escalonado = 0
 
     def newProcess_0(self, nome_arquivo):
         vetor_instrucoes = self.cpu.le_instrucoes(nome_arquivo)
@@ -122,26 +120,97 @@ class Gerenciador:
                 i.estado = estado
        
 
-    def troca_de_contexto(self, pid_novo):
-        self.insere_processo_cpu(pid_novo)
+    def partition(self, process, low, high):
+        i = (low-1)         # index of smaller element
+        pivot = process[high].prioridade     # pivot
+        for j in range(low, high):
+            if process[j].prioridade <= pivot:
+                i = i+1
+                process[i].prioridade, process[j].prioridade = process[j].prioridade, process[i].prioridade
+    
+        process[i+1].prioridade, process[high].prioridade = process[high].prioridade, process[i+1].prioridade
+        return (i+1)
+    def quickSort(self, process, low, high):
+        if len(process) == 1:
+            return process
+        if low < high:
+            pi = self.partition(process, low, high)
+            self.quickSort(process, low, pi-1)
+            self.quickSort(process, pi+1, high)
 
+    def initilize(self, processos): 
+        for i in processos: 
+            i.tempoCpu = 0.0  
+            i.blocked = 0.0  
+            i.requisite = 0 
+        return processos   
+
+    def escalonamento(self, processos):  
+        n = len(processos) 
+        self.quickSort(processos, 0, n-1)
+        quantum = 1.0 
+        for i in processos: 
+            if i.prioridade == 0 :   
+                i.quantum = quantum  
+                if i.requisite == 1 : # o processo usou todo seu quantum para executar 
+                    i.quantum  = 2*quantum    
+                    i.prioridade = 1 #prioridade diminuida 
+                    
+            elif i.prioridade == 1:   
+                i.quantum = 2*quantum  
+                if i.requisite == 1 : # o processo usou todo seu quantum para executar  
+                    i.prioridade = 2 #prioridade diminuida 
+                if i.estado == 1 : 
+                    i.prioridade = 0 
+
+            elif i.prioridade == 2:   
+                i.quantum = 4*quantum  
+                if i.requisite == 1 : # o processo usou todo seu quantum para executar  
+                    i.prioridade = 3 #prioridade diminuida
+                if i.estado == 1 : 
+                    i.prioridade = 1
+            
+            elif i.prioridade == 3: 
+                i.quantum = 8*quantum 
+                if i.estado == 1 : 
+                    i.prioridade = 2 
+        self.initilize(processos)
+        return processos    
+
+    def troca_contexto(self):
+        if self.tabela_pronto != []:
+            processos = self.tabelaProcess.copy()
+            processos = self.escalonamento(processos)
+            for i in processos:
+                if i.estado == 0:
+                    self.tabela_exec.append(i.pid)
+                    self.insere_processo_cpu(i.pid)
+                    self.tabela_pronto.remove(i.pid)
+                    break
+        else:
+            print("Não existem mais processos no estado pronto") 
+            self.cpu = None
     def le_entrada(self, comando):
             comando = self.text[0]
             if (comando == "U"):
                 aux = self.cpu.executa_funcao()
                 if aux[0] == 'B':
                     estado = 1
+                    print(self.tabela_pronto)
                     self.novos_valores_processo(estado)
                     self.tabela_bloq.append(self.cpu.pid)
                     self.tabela_exec.remove(self.cpu.pid)
                     #ESCALONAMENTO É FEITO NO FINAL
+                    self.troca_contexto()
                 elif aux[0] == 'T':
                     self.tabela_exec.remove(self.cpu.pid)
                     for i in self.tabelaProcess:
                         if i.pid == self.cpu.pid:
                             self.tabelaProcess.remove(i)
+                    
                      #O NOVO PID É O PROXIMO PROCESSO A SER EXECUTADO NA LISTA DE PRONTOS
                      #ESCALONAMENTO É FEITO NO FINAL
+                    self.troca_contexto()
                 elif aux[0] == 'F':
                     vetor_instrucoes = self.cpu.vetor_instrucoes.copy()
                     vetor_memoria = self.cpu.vetor_memoria.copy()
@@ -158,17 +227,15 @@ class Gerenciador:
                     self.cpu.pc += int(aux[1]) + 1
                 self.tempo_atual += 1
 
-                    # if self.cpu.tempo_cpu == self.cpu.quantum_processo: SE ISSO AQUI FOR TRUE O PROCESSO TEM QUE IR PRA PARTE DE PRONTO E PARAR DE EXECUTAR
-                    #     for i in self.tabelaProcess:
-                    #         if i == self.cpu.pid:
-                    #             i.requisite = 1
-                    # novo_pid = self.tabela_pronto[0]
-                    #     for i in self.tabelaProcess:
-                    #         if i.pid == novo_pid:
-                    #             i.estado = 2
-                    #     self.insere_processo_cpu(novo_pid)
-                    #     self.tabela_exec.append(novo_pid)
-                    #     self.tabela_pronto.remove(novo_pid)
+                if self.cpu.tempo_cpu == self.cpu.quantum_processo: #SE ISSO AQUI FOR TRUE O PROCESSO TEM QUE IR PRA PARTE DE PRONTO E PARAR DE EXECUTAR
+                    for i in self.tabelaProcess:
+                        if i == self.cpu.pid:
+                            i.requisite = 1
+                            self.novos_valores_processo(0)
+                            self.tabela_pronto.append(self.cpu.pid)
+                            self.tabela_exec.remove(self.cpu.pid)
+                            self.troca_contexto()
+                            break
 
 
     def novo_processo(self, pid, paipid, pc, prioridade, estado, tempo_inicio, tempo_cpu, vetor_instrucoes, vetor_memoria):
