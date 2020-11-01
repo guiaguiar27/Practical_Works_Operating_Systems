@@ -4,13 +4,6 @@ import os
   #funcao parente tambem pode criar um filho
 
 r,w = os.pipe()
-#
-# def func(x):
-#     print(x)
-#     x = x[0]
-#     print(x)
-#     return x
-
 print("Digite 1 para ler comandos de um arquivo\n 2 para digitar oscomandos")
 decision = int(input())
 
@@ -22,12 +15,10 @@ if decision == 1:
         os.close(r)
         f = open("Comandos.txt", "r")
         line = f.readlines()
-        print(line)
         lista = []
         for i in line:
             lista.append(i)
         lista2 = list(map(lambda x:x[0],lista))
-        print(lista2)
         for text in lista2:
             print("Parent process is writing")
             os.write(w, text.encode())
