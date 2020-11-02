@@ -16,8 +16,8 @@ os.system("clear")
 print(" Processo Controle em execução...\n")
 print(" Simulação: Gerenciamento de Processo")
 print(" Métodos: ")
-print("  [*] 1. Arquivo")
-print("  [*] 2. Entrada Manual")
+print(f"  {bcolors.Branco}[*]{bcolors.Reset} 1. Arquivo")
+print(f"  {bcolors.Branco}[*]{bcolors.Reset} 2. Entrada Manual")
 # decision = 1
 decision = int(input("\n  => "))
 
@@ -40,7 +40,7 @@ if decision == 1:
         # print("TEXTO PR:",aux[0])
         aux2 = "".join(list(map(lambda x:x+",",text)))
         aux2 = aux2[0:len(aux2)-1]
-        print("Comando: ",aux2)
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} Comando: ",aux2)
 
 
         gerenciador = Gerenciador()
@@ -49,12 +49,12 @@ if decision == 1:
             gerenciador.le_entrada(text[i])
 
 
-        print("  [*] Tempo final do gerenciado", gerenciador.tempo_atual)
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} Tempo Final do Gerenciamento", gerenciador.tempo_atual)
 
     if pid > 0:
 
         os.close(r)
-        f = open("../Comandos.txt", "r")
+        f = open("Comandos.txt", "r")
         line = f.readlines()
         # print(line)
         lista = []
@@ -77,10 +77,10 @@ if decision == 2:
     if pid > 0:
         os.close(r)
         print(" Entrada de Comando\n")
-        print("  [*] U: Fim de uma unidade de tempo.")
-        print("  [*] L: Inícia processo que estava bloqueado.")
-        print("  [*] I: Imprime o tempo médio do ciclo.")
-        print("  [*] M: Imprime o tempo médio do ciclo e finaliza o sistema.\n")
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} U: Fim de uma unidade de tempo.")
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} L: Inícia processo que estava bloqueado.")
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} I: Imprime o tempo médio do ciclo.")
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} M: Imprime o tempo médio do ciclo e finaliza o sistema.\n")
         answer = str(input("  => "))
         if(answer == "M"):
             pas = b"M"
@@ -116,7 +116,7 @@ if decision == 2:
         # print("TEXTO PR:",aux[0])
         aux2 = "".join(list(map(lambda x:x+",",text)))
         aux2 = aux2[0:len(aux2)-1]
-        print("  Comando: ",aux2)
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} Comando: ",aux2)
 
         gerenciador = Gerenciador()
 
@@ -124,7 +124,7 @@ if decision == 2:
             gerenciador.le_entrada(text[i])
 
 
-        print("Tempo final do gerenciado", gerenciador.tempo_atual)
+        print(f"  {bcolors.Branco}[*]{bcolors.Reset} Tempo Final do Gerenciamento", gerenciador.tempo_atual)
 
 
 

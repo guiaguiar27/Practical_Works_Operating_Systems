@@ -18,7 +18,7 @@ def quickSort(process, low, high):
         quickSort(process, low, pi-1)
         quickSort(process, pi+1, high)
 def initilize(processos): 
-    for i in processos:  
+    for i in processos:     
         i.requisite = 0 
     return processos    
 
@@ -63,8 +63,8 @@ def escalonamento(processos):
     return processos  
 
 
-# process = [] 
-# lista_processos = [] 
+process = [] 
+lista_processos = [] 
 # count = 0 
 # aux = 0.0   
 # print("Marcador")

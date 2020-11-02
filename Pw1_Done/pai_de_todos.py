@@ -92,17 +92,17 @@ class Cpu:
             self.vetor_memoria[index] = self.vetor_memoria[index] - int(line[2])
             self.pc = self.pc + 1
         elif line[0] == 'B':
-            print("  [*] Bloqueia processo")
+            print(f"  {bcolors.Branco}[*]{bcolors.Reset} Bloqueia processo")
             self.pc = self.pc + 1
         elif line[0] == 'T':
-            self.pc = self.pc
+            self.pc = self.pc + 1
         elif line[0] == 'F':
-            print("Cria novo processo")
+            print(f"  {bcolors.Branco}[*]{bcolors.Reset} Cria novo processo")
         elif line[0] == 'R':
             self.pc = 0
             self.vetor_instrucoes = self.le_instrucoes(line[1]) #substitui as instruções atuais pelas instruções no novo arquivo
         else:
-            print("Arquivo com comando inválido")
+            print("  [*] Arquivo com comando inválido")
             exit
         self.tempo_cpu += 1
         return(line)
@@ -122,7 +122,7 @@ class Gerenciador(Cpu):
         self.text = "U"
         self.tempo_atual = 0
         self.cpu = Cpu(0 ,0, 0, 0, 0, 1)
-        self.newProcess_0('teste_processo.txt')
+        self.newProcess_0('program_init.txt')
         self.processo_escalonado = 0
 
     def newProcess_0(self, nome_arquivo):
@@ -343,40 +343,46 @@ class Gerenciador(Cpu):
 
             elif (comando == "I"):
                 # print("  ------------------------------------------ Processos Prontos------------------------------------------------")
-
+                print("  -----------")
+                print(f"  {bcolors.Branco}[*]{bcolors.Reset} Processo Impressão Iniciado")
                 print(f"\n\n  {bcolors.Amarelo}[*]{bcolors.Reset} Prontos\n")
                 for i in self.tabela_pronto:
                     processo = list(filter(lambda x:x.pid == i,self.tabelaProcess))
                     process = processo[0]
 
-                    print("  PID:",process.pid)
-                    print("  PID parent:",process.paipid,end="")
-                    print("\n  Tempo gasto:",process.tempo_cpu,end="")
-                    print("\n  Instruções executadas:"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
-                    print("\n  Memória:",process.vetor_memoria,end="")
-                    print("\n  ")
+                    print(f"  {bcolors.Branco}PID:{bcolors.Reset}",process.pid)
+                    print(f"  {bcolors.Branco}PID parent:{bcolors.Reset}",process.paipid,end="")
+                    print(f"\n  {bcolors.Branco}Tempo gasto:{bcolors.Reset}",process.tempo_cpu,end="")
+                    print(f"\n  {bcolors.Branco}Instruções executadas:{bcolors.Reset}"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
+                    print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
+                    print(f"\n  {bcolors.Branco}-----------")
+
+                print(f"  {bcolors.Amarelo}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
                 print(f"  {bcolors.Vermelho}[*]{bcolors.Reset} Bloqueado\n")
                 # print("TAM BLOQ",len(self.tabela_bloq))
                 for i in self.tabela_bloq:
                     processo = list(filter(lambda x:x.pid == i,self.tabelaProcess))
                     process = processo[0]
-                    print("  PID:",process.pid)
-                    print("  PID parent:",process.paipid,end="")
-                    print("\n  Tempo gasto:",process.tempo_cpu,end="")
-                    print("\n  Instruções executadas:"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
-                    print("\n  Memória:",process.vetor_memoria,end="")
-                    print("\n  ")
+                    print(f"  {bcolors.Branco}PID:{bcolors.Reset}",process.pid)
+                    print(f"  {bcolors.Branco}PID parent:{bcolors.Reset}",process.paipid,end="")
+                    print(f"\n  {bcolors.Branco}Tempo gasto:{bcolors.Reset}",process.tempo_cpu,end="")
+                    print(f"\n  {bcolors.Branco}Instruções executadas:{bcolors.Reset}"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
+                    print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
+                    print(f"\n  {bcolors.Branco}-----------{bcolors.Reset}")
+
+                print(f"  {bcolors.Vermelho}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
                 print(f"  {bcolors.Verde}[*]{bcolors.Reset} Em Execução\n")
                 # print("TAM BLOQ",len(self.tabela_bloq))
                 for i in self.tabela_exec:
                     processo = list(filter(lambda x:x.pid == i,self.tabelaProcess))
                     process = processo[0]
-                    print("  PID:",process.pid)
-                    print("  PID parent:",process.paipid,end="")
-                    print("\n  Tempo gasto:",process.tempo_cpu,end="")
-                    print("\n  Instruções executadas:"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
-                    print("\n  Memória:",process.vetor_memoria,end="")
-                    print("\n  ")
+                    print(f"  {bcolors.Branco}PID:{bcolors.Reset}",process.pid)
+                    print(f"  {bcolors.Branco}PID parent:{bcolors.Reset}",process.paipid,end="")
+                    print(f"\n  {bcolors.Branco}Tempo gasto:{bcolors.Reset}",process.tempo_cpu,end="")
+                    print(f"\n  {bcolors.Branco}Instruções executadas:{bcolors.Reset}"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
+                    print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
+                    print(f"\n  {bcolors.Branco}-----------{bcolors.Reset}")
+                print(f"  {bcolors.Verde}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
 
 
@@ -384,40 +390,41 @@ class Gerenciador(Cpu):
                 #     # parent
 
             elif (comando == "M"):
-
+                print("  -----------")
+                print(f"  {bcolors.Branco}[*]{bcolors.Reset} Processo Impressão Iniciado")
                 print(f"\n\n  {bcolors.Amarelo}[*]{bcolors.Reset} Prontos\n")
                 for i in self.tabela_pronto:
                     # print(self.tabela_pronto)
                     processo = list(filter(lambda x:x.pid == i,self.tabelaProcess))
                     process = processo[0]
-                    print("  PID:",process.pid)
-                    print("  PID parent:",process.paipid,end="")
-                    print("\n  Tempo gasto:",process.tempo_cpu,end="")
-                    print("\n  Instruções executadas:"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
-                    print("\n  Memória:",process.vetor_memoria,end="")
-                    print("\n  ")
+                    print(f"  {bcolors.Branco}PID:{bcolors.Reset}",process.pid)
+                    print(f"  {bcolors.Branco}PID parent:{bcolors.Reset}",process.paipid,end="")
+                    print(f"\n  {bcolors.Branco}Tempo gasto:{bcolors.Reset}",process.tempo_cpu,end="")
+                    print(f"\n  {bcolors.Branco}Instruções executadas:{bcolors.Reset}"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
+                    print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
+                    print(f"\n  {bcolors.Branco}-----------{bcolors.Reset}")
                 print(f"  {bcolors.Amarelo}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
                 print(f"  {bcolors.Vermelho}[*]{bcolors.Reset} Bloqueado\n")
                 for i in self.tabela_bloq:
                     processo = list(filter(lambda x:x.pid == i,self.tabelaProcess))
                     process = processo[0]
-                    print("  PID:",process.pid)
-                    print("  PID parent:",process.paipid,end="")
-                    print("\n  Tempo gasto:",process.tempo_cpu,end="")
-                    print("\n  Instruções executadas:"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
-                    print("\n  Memória:",process.vetor_memoria,end="")
-                    print("\n  ")
+                    print(f"  {bcolors.Branco}PID:{bcolors.Reset}",process.pid)
+                    print(f"  {bcolors.Branco}PID parent:{bcolors.Reset}",process.paipid,end="")
+                    print(f"\n  {bcolors.Branco}Tempo gasto:{bcolors.Reset}",process.tempo_cpu,end="")
+                    print(f"\n  {bcolors.Branco}Instruções executadas:{bcolors.Reset}"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
+                    print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
+                    print(f"\n  {bcolors.Branco}-----------{bcolors.Reset}")
                 print(f"  {bcolors.Vermelho}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
                 print(f"  {bcolors.Verde}[*]{bcolors.Reset} Finalizados\n")
                 for process in self.tabela_final:
-                    print("  PID:",process.pid)
-                    print("  PID parent:",process.paipid,end="")
-                    print("\n  Tempo gasto:",process.tempo_cpu,end="")
-                    print("\n  Instruções executadas:"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
-                    print("\n  Memória:",process.vetor_memoria,end="")
-                    print("\n  ")
+                    print(f"  {bcolors.Branco}PID:{bcolors.Reset}",process.pid)
+                    print(f"  {bcolors.Branco}PID parent:{bcolors.Reset}",process.paipid,end="")
+                    print(f"\n  {bcolors.Branco}Tempo gasto:{bcolors.Reset}",process.tempo_cpu,end="")
+                    print(f"\n  {bcolors.Branco}Instruções executadas:{bcolors.Reset}"," : ".join(list(map(lambda x:x.replace("\n",""), process.vetor_instrucoes))),end="")
+                    print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
+                    print(f"\n  -----------")
                 print(f"  {bcolors.Verde}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
                 # print(f"{bcolors.Verde}Warning: No active frommets remain. Continue?{bcolors.Reset}")
