@@ -40,7 +40,7 @@ if decision == 1:
         # print("TEXTO PR:",aux[0])
         aux2 = "".join(list(map(lambda x:x+",",text)))
         aux2 = aux2[0:len(aux2)-1]
-        print(f"  {bcolors.Branco}[*]{bcolors.Reset} Comando: ",aux2)
+        print(f"\n  {bcolors.Branco}[*]{bcolors.Reset} Comando: ",aux2)
 
 
         gerenciador = Gerenciador()
@@ -116,7 +116,7 @@ if decision == 2:
         # print("TEXTO PR:",aux[0])
         aux2 = "".join(list(map(lambda x:x+",",text)))
         aux2 = aux2[0:len(aux2)-1]
-        print(f"  {bcolors.Branco}[*]{bcolors.Reset} Comando: ",aux2)
+        print(f"\n  {bcolors.Branco}[*]{bcolors.Reset} Comando: ",aux2)
 
         gerenciador = Gerenciador()
 
