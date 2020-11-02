@@ -248,7 +248,9 @@ class Gerenciador(Cpu):
             #         print("MEM2",self.tabelaProcess[1].vetor_memoria)
             # # print("TABELA2",self.tabelaProcess[1].vetor_instrucoes)
             # print("-----------------------------------------------------------")
-            if (comando == "U"):
+            if (comando == "U" and self.tabelaProcess == []):
+                print("  [*]  A tabela de processos está vazia!")
+            if (comando == "U" and self.tabelaProcess != []):
                 # print("TAMANHO:",len(self.tabelaProcess))
                 # print("LEN",len(self.tabela_bloq))
                 aux = self.cpu.executa_funcao()
