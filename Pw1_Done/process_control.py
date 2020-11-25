@@ -54,7 +54,7 @@ if decision == 1:
     if pid > 0:
 
         os.close(r)
-        f = open("Comandos.txt", "r")
+        f = open("/home/gabriel/Faculdade/SO/TP1/Practical_Works_Operating_Systems/Pw1_Done/Comandos.txt", "r")
         line = f.readlines()
         # print(line)
         lista = []

@@ -8,6 +8,7 @@ A 0 20
 S 1 53
 A 1 55
 F 1
+R /home/gabriel/Faculdade/SO/TP1/Practical_Works_Operating_Systems/Pw1_Done/program_init2.txt
 B
 A 0 5
 A 0 5

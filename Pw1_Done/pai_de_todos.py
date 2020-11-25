@@ -1,6 +1,7 @@
 import threading
 import time
 import os
+from memoria import *
 
 class bcolors:
     Preto = '\033[1;30m'
@@ -41,6 +42,7 @@ class Processo_simulado:
         self.requisite = requisite
         self.quantum = quantum
         self.tam = 0
+        self.flag_mem = False #variavel para saber se está bloqueado por falta de memória
 
 
 class Cpu:
@@ -122,8 +124,11 @@ class Gerenciador(Cpu):
         self.text = "U"
         self.tempo_atual = 0
         self.cpu = Cpu(0 ,0, 0, 0, 0, 1)
-        self.newProcess_0('program_init.txt')
+        self.newProcess_0('/home/gabriel/Faculdade/SO/TP1/Practical_Works_Operating_Systems/Pw1_Done/program_init.txt')
         self.processo_escalonado = 0
+        self.memory = []
+        for i in range(5): #número de posições do vetor de memória
+            self.memory.append(var_Memoria())
 
     def newProcess_0(self, nome_arquivo):
         vetor_instrucoes = self.cpu.le_instrucoes(nome_arquivo)
@@ -161,6 +166,7 @@ class Gerenciador(Cpu):
                 i.pc  = resultado[2]
                 i.tempo_cpu  += resultado[3]
                 i.estado = estado
+                i.flag_mem = True
 
 
     def partition(self, process, low, high):
@@ -220,31 +226,41 @@ class Gerenciador(Cpu):
         self.initilize(processos)
         return processos
 
-    def troca_contexto(self):
+    def troca_contexto(self): #TEVE MUDANÇA AQUI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # print("LEN TROCA",len(self.tabela_bloq))
+            print("VEio pra troca de contexto")
             if self.tabela_pronto != []:
                 # print("LEN TROCA1",len(self.tabela_bloq))
-                processos = self.tabelaProcess.copy()
-                processos = self.escalonamento(processos)
-                for i in processos:
-                    if i.estado == 0:
-                        # self.tabela_exec.append(i.pid)
-                        self.insere_processo_cpu(i.pid)
-                        # self.tabela_pronto.remove(i.pid)
-                        # print("LEN TROCA2",len(self.tabela_bloq))
-                        break
+
+                # A MUDANÇA FOI ESSE FOR
+                resultado_aloc = False
+                for i in self.tabela_pronto:
+                    item = list(filter(lambda x: x.pid == i, self.tabelaProcess))
+                    if item[0].flag_mem == True:
+                        resultado_aloc = aloca_mem_processo_FF(self.memory, len(item[0].vetor_memoria), item[0].pid)
+                        print("Valor que ta tentando executar de novo:", item[0].pid)
+                        if resultado_aloc == True:
+                            item[0].flag_mem = False
+                            self.insere_processo_cpu(item[0].pid)
+                            break
+
+                if resultado_aloc == False:
+                    processos = self.tabelaProcess.copy()
+                    processos = self.escalonamento(processos)
+                    for i in processos:
+                        if i.estado == 0:
+                            self.insere_processo_cpu(i.pid)
+                            # print("LEN TROCA2",len(self.tabela_bloq))
+                            break
             elif self.tabelaProcess == []:
                 # print("  [*] Não existem mais processos")
                 self.cpu = None
 
     def le_entrada(self, comando):
 
-            # comando = self.text[0]
             # print("-----------------------------------------------------------")
             # print("TABELA",len(self.tabelaProcess))
-            # if(self.tabelaProcess != []):
             #     print("MEM",self.tabelaProcess[0].vetor_memoria)
-            #     if(len(self.tabelaProcess) > 1):
             #         print("MEM2",self.tabelaProcess[1].vetor_memoria)
             # # print("TABELA2",self.tabelaProcess[1].vetor_instrucoes)
             # print("-----------------------------------------------------------")
@@ -257,9 +273,26 @@ class Gerenciador(Cpu):
                 estado = 0
                 # print("LINHA AUX",aux)
                 # print("PROCESSO EM EXECUÇÃO: ",self.cpu.pid)
-                if aux[0] == 'B':
+                if aux[0] == 'N': #ISSO AQUI É ADIÇÃO NOVA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    print("O que gerou foi N")
+                    retorno_aloc = aloca_mem_processo_FF(self.memory, int(aux[1]), self.cpu.pid) #aloca as posições de memória necessária para esse processo
+                    if retorno_aloc == False:
+                        print("Processo foi bloqueado por falta de memoria")
+                        self.novos_valores_processo(estado)
+                        self.tabela_pronto.append(self.cpu.pid)
+                        self.tabela_exec.remove(self.cpu.pid)
+                        self.troca_contexto()
+                
+                elif aux[0] == 'R':
+                    for i in self.tabelaProcess:
+                        if i.pid == self.cpu.pid:
+                            print("O que gerou foi R")
+                            desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid) #desaloca o que estava ocupando antes
+                            #se não tiver espaço suficiente pras novas instruções, tem que parar de executar
+                            break
+
+                elif aux[0] == 'B':
                     estado = 1
-                    # if(len(list(map(lambda x:x.pid==self.cpu.pid , self.tabelaProcess))) == 0):
                     #     print("EU EXISTO")
                     # print(self.tabela_pronto)
                     self.novos_valores_processo(estado)
@@ -268,9 +301,12 @@ class Gerenciador(Cpu):
                     self.tabela_exec.remove(self.cpu.pid)
                     # print("DEPOIS 3:",self.tabela_exec)
 
-                    #ESCALONAMENTO É FEITO NO FINAL
                     # print("ESTOU BEM AQUI",self.cpu.vetor_instrucoes)
-
+                    for i in self.tabelaProcess:
+                        if i.pid == self.cpu.pid:
+                            p = i
+                            break
+                    desaloca_mem_processo(self.memory, len(p.vetor_memoria), p.pid)
                     self.troca_contexto()
                 elif aux[0] == 'T':
 
@@ -281,21 +317,22 @@ class Gerenciador(Cpu):
 
                     for i in self.tabelaProcess:
                         if i.pid == self.cpu.pid:
+                            print("Processo que terminou:", i.pid)
                             index = self.tabelaProcess.index(i)
                             # print("ADICIONEI UM PROCESSO")
 
                             self.tabela_final.append(i)
+                            print("O que gerou foi T")
+                            desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid)
 
                             self.tabelaProcess.remove(i)
-                            # for i in range(len(self.tabela_bloq)):
-                            #     if(self.tabela_bloq[i] > index):
-                            #         # print("CHEGUEI")
-                            #         self.tabela_bloq[i] = self.tabela_bloq[i] - 1
-                            # self.tabela_bloq = list(map(lambda x: x-1 if x>index else False, self.tabela_bloq))
 
-
+                    
                     self.troca_contexto()
+
+                    #MUDOU AQUI TAMBEM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 elif aux[0] == 'F':
+                    print("Entrou no F)")
                     vetor_instrucoes = self.cpu.vetor_instrucoes.copy()
                     vetor_memoria = self.cpu.vetor_memoria.copy()
                     pc = self.cpu.pc + 1
@@ -303,12 +340,22 @@ class Gerenciador(Cpu):
                     tempo_inicio = self.tempo_atual
                     novo_pid = self.cpu.pid + 1
                     paipid = self.cpu.pid
+
                     for i in self.tabelaProcess:
                         if i.pid == self.cpu.pid:
                             prioridade = i.prioridade
                     estado = 0
                     self.novo_processo(novo_pid, paipid, pc, prioridade, estado, tempo_inicio, tempo_cpu, vetor_instrucoes, vetor_memoria)
                     self.cpu.pc += int(aux[1]) + 1
+
+                    print("O que gerou foi F")
+                    res_aloca = aloca_mem_processo_FF(self.memory, len(vetor_memoria), novo_pid)
+                    if res_aloca == False:
+                        for i in self.tabelaProcess:
+                            if i.pid == novo_pid:
+                                print("Processo foi bloqueado quando foi criado")
+                                i.flag_mem = True
+                        
                 self.tempo_atual += 1
 
                 if(aux[0] != 'B' and aux[0] != 'T'):
@@ -327,13 +374,15 @@ class Gerenciador(Cpu):
             elif (comando =='L'):
                 aux = self.tabela_bloq[0]
                 # print("AUX",aux)
-                if self.tabela_pronto == []:
+                if self.tabela_pronto == [] and self.tabela_exec == []:
                     self.tabela_pronto.append(aux)
                     self.tabela_bloq.pop(0)
 
                     for i in self.tabelaProcess:
                         if i.pid == aux:
                             i.estado = 0
+                            if not (aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid)):
+                                i.flag_mem = True
                     self.troca_contexto()
                 else:
                     self.tabela_pronto.append(aux)
@@ -342,6 +391,8 @@ class Gerenciador(Cpu):
                     for i in self.tabelaProcess:
                         if i.pid == aux:
                             i.estado = 0
+                            if not (aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid)):
+                                i.flag_mem = True
 
             elif (comando == "I"):
                 # print("  ------------------------------------------ Processos Prontos------------------------------------------------")
