@@ -29,9 +29,7 @@ def print_memory(memory):
 
 def aloca_mem_processo_FF(memory, num_var, pid):
     # cada segmento comporta apenas 1 memória
-    print("O processo que ta tentando alocar é:", pid)
-    for k in range(len(memory)):
-        print("Ta ocupado", k, memory[k].ocupado)
+    #print("O processo que ta tentando alocar é:", pid)
     for i in range(len(memory)):
         count = 0
         if ((i + num_var) <= len(memory)):
@@ -43,24 +41,24 @@ def aloca_mem_processo_FF(memory, num_var, pid):
                     break
             if (count == num_var):
                 for j in range(i, i + num_var ):
-                    print("Num var inserir:", num_var)
-                    print("Pos inserir:", j)
                     memory[j].pid = pid
                     memory[j].ocupado = True
-                return True
+                return True, i 
         else:
-            print("Retornou falso")
-            return False
+            #print("Retornou falso")
+            return False, 0 
 
 def desaloca_mem_processo(memory, num_var, pid):
     count = 0
-    print("Processo que ta desalocando:", pid)
+    num_fragmentos_livres = 0
+    #print("Processo que ta desalocando:", pid)
     for i in range(len(memory)):
         if(memory[i].pid == pid):
             memory[i].pid = 0.1
             memory[i].ocupado = False
             count += 1
-            print("Num var remover:", num_var)
-            print("Pos remover:", i)
-        if(count == num_var):
-            return
+        if(memory[i].ocupado == False):
+            num_fragmentos_livres += 1
+    #print("Num fragmentos livres 1:", num_fragmentos_livres)
+    return num_fragmentos_livres
+           
