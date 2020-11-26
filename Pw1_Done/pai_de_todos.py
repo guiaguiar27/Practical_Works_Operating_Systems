@@ -1,6 +1,7 @@
 import threading
 import time
 import os
+from memoria import *
 
 class bcolors:
     Preto = '\033[1;30m'
@@ -41,6 +42,7 @@ class Processo_simulado:
         self.requisite = requisite
         self.quantum = quantum
         self.tam = 0
+        self.flag_mem = False #variavel para saber se está bloqueado por falta de memória
 
 
 class Cpu:
@@ -122,8 +124,16 @@ class Gerenciador(Cpu):
         self.text = "U"
         self.tempo_atual = 0
         self.cpu = Cpu(0 ,0, 0, 0, 0, 1)
-        self.newProcess_0('program_init.txt')
+        self.newProcess_0('/home/gabriel/Faculdade/SO/TP1/Practical_Works_Operating_Systems/Pw1_Done/program_init.txt')
         self.processo_escalonado = 0
+        self.memory = []
+        self.num_desalocacoes = 0
+        self.num_frag_livres = 0
+        self.num_alocacoes = 0
+        self.num_nos_percorridos_alocacao = 0
+        self.num_alocacoes_negadas = 0
+        for i in range(5): #número de posições do vetor de memória
+            self.memory.append(var_Memoria())
 
     def newProcess_0(self, nome_arquivo):
         vetor_instrucoes = self.cpu.le_instrucoes(nome_arquivo)
@@ -161,6 +171,7 @@ class Gerenciador(Cpu):
                 i.pc  = resultado[2]
                 i.tempo_cpu  += resultado[3]
                 i.estado = estado
+                i.flag_mem = True
 
 
     def partition(self, process, low, high):
@@ -220,31 +231,47 @@ class Gerenciador(Cpu):
         self.initilize(processos)
         return processos
 
-    def troca_contexto(self):
+    def troca_contexto(self): #TEVE MUDANÇA AQUI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # print("LEN TROCA",len(self.tabela_bloq))
+            #print("VEio pra troca de contexto")
             if self.tabela_pronto != []:
                 # print("LEN TROCA1",len(self.tabela_bloq))
-                processos = self.tabelaProcess.copy()
-                processos = self.escalonamento(processos)
-                for i in processos:
-                    if i.estado == 0:
-                        # self.tabela_exec.append(i.pid)
-                        self.insere_processo_cpu(i.pid)
-                        # self.tabela_pronto.remove(i.pid)
-                        # print("LEN TROCA2",len(self.tabela_bloq))
-                        break
+
+                # A MUDANÇA FOI ESSE FOR
+                testador =False
+                for i in self.tabela_pronto:
+                    item = list(filter(lambda x: x.pid == i, self.tabelaProcess))
+                    if item[0].flag_mem == True:
+                        resultado_aloc = aloca_mem_processo_FF(self.memory, len(item[0].vetor_memoria), item[0].pid)
+                        #print("Valor que ta tentando executar de novo:", item[0].pid)
+                        if resultado_aloc[0] == True:
+                            item[0].flag_mem = False
+                            self.num_alocacoes +=1
+                            self.num_nos_percorridos_alocacao += resultado_aloc[1]
+                            self.insere_processo_cpu(item[0].pid)
+                            testador = True
+                            break
+                        elif resultado_aloc[0] == False:
+                            testador = False
+                            self.num_alocacoes_negadas += 1
+                
+                if testador == False:
+                    processos = self.tabelaProcess.copy()
+                    processos = self.escalonamento(processos)
+                    for i in processos:
+                        if i.estado == 0:
+                            self.insere_processo_cpu(i.pid)
+                            # print("LEN TROCA2",len(self.tabela_bloq))
+                            break
             elif self.tabelaProcess == []:
                 # print("  [*] Não existem mais processos")
                 self.cpu = None
 
     def le_entrada(self, comando):
 
-            # comando = self.text[0]
             # print("-----------------------------------------------------------")
             # print("TABELA",len(self.tabelaProcess))
-            # if(self.tabelaProcess != []):
             #     print("MEM",self.tabelaProcess[0].vetor_memoria)
-            #     if(len(self.tabelaProcess) > 1):
             #         print("MEM2",self.tabelaProcess[1].vetor_memoria)
             # # print("TABELA2",self.tabelaProcess[1].vetor_instrucoes)
             # print("-----------------------------------------------------------")
@@ -257,9 +284,31 @@ class Gerenciador(Cpu):
                 estado = 0
                 # print("LINHA AUX",aux)
                 # print("PROCESSO EM EXECUÇÃO: ",self.cpu.pid)
-                if aux[0] == 'B':
+                if aux[0] == 'N': #ISSO AQUI É ADIÇÃO NOVA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    #print("O que gerou foi N")
+                    retorno_aloc = aloca_mem_processo_FF(self.memory, int(aux[1]), self.cpu.pid) #aloca as posições de memória necessária para esse processo
+                    if retorno_aloc[0] == False:
+                        #print("Processo foi bloqueado por falta de memoria")
+                        self.num_alocacoes_negadas += 1
+                        self.novos_valores_processo(estado)
+                        self.tabela_pronto.append(self.cpu.pid)
+                        self.tabela_exec.remove(self.cpu.pid)
+                        self.troca_contexto()
+                    elif retorno_aloc[0] == True:
+                        self.num_alocacoes += 1 
+                        self.num_nos_percorridos_alocacao += retorno_aloc[1]
+                elif aux[0] == 'R':
+                    for i in self.tabelaProcess:
+                        if i.pid == self.cpu.pid:
+                            #print("O que gerou foi R")
+                            frag_livres = desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid) #desaloca o que estava ocupando antes
+                            self.num_desalocacoes += 1
+                            self.num_frag_livres += frag_livres
+                            #se não tiver espaço suficiente pras novas instruções, tem que parar de executar
+                            break
+
+                elif aux[0] == 'B':
                     estado = 1
-                    # if(len(list(map(lambda x:x.pid==self.cpu.pid , self.tabelaProcess))) == 0):
                     #     print("EU EXISTO")
                     # print(self.tabela_pronto)
                     self.novos_valores_processo(estado)
@@ -268,9 +317,14 @@ class Gerenciador(Cpu):
                     self.tabela_exec.remove(self.cpu.pid)
                     # print("DEPOIS 3:",self.tabela_exec)
 
-                    #ESCALONAMENTO É FEITO NO FINAL
                     # print("ESTOU BEM AQUI",self.cpu.vetor_instrucoes)
-
+                    for i in self.tabelaProcess:
+                        if i.pid == self.cpu.pid:
+                            p = i
+                            break
+                    frag_livres = desaloca_mem_processo(self.memory, len(p.vetor_memoria), p.pid)
+                    self.num_desalocacoes += 1
+                    self.num_frag_livres += frag_livres
                     self.troca_contexto()
                 elif aux[0] == 'T':
 
@@ -281,21 +335,24 @@ class Gerenciador(Cpu):
 
                     for i in self.tabelaProcess:
                         if i.pid == self.cpu.pid:
+                            #print("Processo que terminou:", i.pid)
                             index = self.tabelaProcess.index(i)
                             # print("ADICIONEI UM PROCESSO")
 
                             self.tabela_final.append(i)
+                            #print("O que gerou foi T")
+                            frag_livres = desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid)
+                            self.num_desalocacoes += 1
+                            self.num_frag_livres += frag_livres
 
                             self.tabelaProcess.remove(i)
-                            # for i in range(len(self.tabela_bloq)):
-                            #     if(self.tabela_bloq[i] > index):
-                            #         # print("CHEGUEI")
-                            #         self.tabela_bloq[i] = self.tabela_bloq[i] - 1
-                            # self.tabela_bloq = list(map(lambda x: x-1 if x>index else False, self.tabela_bloq))
 
-
+                    
                     self.troca_contexto()
+
+                    #MUDOU AQUI TAMBEM !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 elif aux[0] == 'F':
+                    #print("Entrou no F)")
                     vetor_instrucoes = self.cpu.vetor_instrucoes.copy()
                     vetor_memoria = self.cpu.vetor_memoria.copy()
                     pc = self.cpu.pc + 1
@@ -303,12 +360,26 @@ class Gerenciador(Cpu):
                     tempo_inicio = self.tempo_atual
                     novo_pid = self.cpu.pid + 1
                     paipid = self.cpu.pid
+
                     for i in self.tabelaProcess:
                         if i.pid == self.cpu.pid:
                             prioridade = i.prioridade
                     estado = 0
                     self.novo_processo(novo_pid, paipid, pc, prioridade, estado, tempo_inicio, tempo_cpu, vetor_instrucoes, vetor_memoria)
                     self.cpu.pc += int(aux[1]) + 1
+
+                    #print("O que gerou foi F")
+                    res_aloca = aloca_mem_processo_FF(self.memory, len(vetor_memoria), novo_pid)
+                    if res_aloca[0] == False:
+                        self.num_alocacoes_negadas += 1
+                        for i in self.tabelaProcess:
+                            if i.pid == novo_pid:
+                                #print("Processo foi bloqueado quando foi criado")
+                                i.flag_mem = True
+                    elif res_aloca[0] == True:
+                        self.num_alocacoes += 1 
+                        self.num_nos_percorridos_alocacao += res_aloca[1]
+                        
                 self.tempo_atual += 1
 
                 if(aux[0] != 'B' and aux[0] != 'T'):
@@ -327,13 +398,20 @@ class Gerenciador(Cpu):
             elif (comando =='L'):
                 aux = self.tabela_bloq[0]
                 # print("AUX",aux)
-                if self.tabela_pronto == []:
+                if self.tabela_pronto == [] and self.tabela_exec == []:
                     self.tabela_pronto.append(aux)
                     self.tabela_bloq.pop(0)
 
                     for i in self.tabelaProcess:
                         if i.pid == aux:
                             i.estado = 0
+                            resultado_aloc = aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid)
+                            if resultado_aloc[0] == False:
+                                i.flag_mem = True
+                                self.num_alocacoes_negadas +=1
+                            elif resultado_aloc[0] == True:
+                                self.num_nos_percorridos_alocacao += resultado_aloc[1]
+                                self.num_alocacoes +=1
                     self.troca_contexto()
                 else:
                     self.tabela_pronto.append(aux)
@@ -342,10 +420,17 @@ class Gerenciador(Cpu):
                     for i in self.tabelaProcess:
                         if i.pid == aux:
                             i.estado = 0
+                            resultado_aloc = aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid)
+                            if resultado_aloc[0] == False:
+                                i.flag_mem = True
+                                self.num_alocacoes_negadas += 1
+                            elif resultado_aloc[0] == True:
+                                self.num_nos_percorridos_alocacao += resultado_aloc[1]
+                                self.num_alocacoes +=1
 
             elif (comando == "I"):
                 # print("  ------------------------------------------ Processos Prontos------------------------------------------------")
-                print("  -----------")
+                print("  -------------------------------")
                 print(f"  {bcolors.Branco}[*]{bcolors.Reset} Processo Impressão Iniciado")
                 print(f"\n\n  {bcolors.Amarelo}[*]{bcolors.Reset} Prontos\n")
                 for i in self.tabela_pronto:
@@ -386,14 +471,36 @@ class Gerenciador(Cpu):
                     print(f"\n  {bcolors.Branco}-----------{bcolors.Reset}")
                 print(f"  {bcolors.Verde}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
+                
+
+
+
+
+                print(f"  {bcolors.Cyan}[*]{bcolors.Reset} Estado da memória\n")
+
+            
+                print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
+                count = 0 
+                for i in range(len(self.memory)): 
+
+                    if self.memory[i].ocupado == True:
+                        print(f"  {bcolors.Branco}Posicao %d esta ocupada  pelo PID {bcolors.Reset} %d " %(count, self.memory[i].pid)) 
+                    if self.memory[i].ocupado == False:
+                        print(f"  {bcolors.Branco}Posicao %d esta livre" %count)
+                    count +=1
+
+                
+                print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
 
                 # else:
                 #     # parent
 
             elif (comando == "M"):
-                print("  -----------")
-                print(f"  {bcolors.Branco}[*]{bcolors.Reset} Processo Impressão Iniciado")
+                print("  ----------------------")
+                print(f"  {bcolors.Branco}[*]{bcolors.Reset} Finalizacao do sistema")
                 print(f"\n\n  {bcolors.Amarelo}[*]{bcolors.Reset} Prontos\n")
                 for i in self.tabela_pronto:
                     # print(self.tabela_pronto)
@@ -428,6 +535,16 @@ class Gerenciador(Cpu):
                     print(f"\n  {bcolors.Branco}Memória:{bcolors.Reset}",process.vetor_memoria,end="")
                     print(f"\n  -----------")
                 print(f"  {bcolors.Verde}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
+
+                print(f"  {bcolors.Cyan}[*]{bcolors.Reset} Parametros de desempenho da memoria\n")
+
+            
+                print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
+
+                
+                print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
                 # print(f"{bcolors.Verde}Warning: No active frommets remain. Continue?{bcolors.Reset}")
 

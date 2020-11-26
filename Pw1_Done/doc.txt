@@ -1,0 +1,5 @@
+para calcular o número de fragmentos externos, sempre que um processo tentar alocar e não conseguir, contar o número de blocos livres nessa hora
+
+quando um processo desaloca, conta quantos blocos estão livres
+
+só conta que teve uma alocação quando conseguiu alocar
