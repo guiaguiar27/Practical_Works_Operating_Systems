@@ -42,7 +42,6 @@ class Processo_simulado:
         self.requisite = requisite
         self.quantum = quantum
         self.tam = 0
-        self.flag_mem = False #variavel para saber se está bloqueado por falta de memória
 
 
 class Cpu:
@@ -131,8 +130,8 @@ class Gerenciador(Cpu):
         self.num_frag_livres = 0
         self.num_alocacoes = 0
         self.num_nos_percorridos_alocacao = 0
-        self.num_alocacoes_negadas = 0
-        for i in range(5): #número de posições do vetor de memória
+        self.mem_virtual = []
+        for i in range(2): #número de posições do vetor de memória
             self.memory.append(var_Memoria())
 
     def newProcess_0(self, nome_arquivo):
@@ -236,33 +235,13 @@ class Gerenciador(Cpu):
             #print("VEio pra troca de contexto")
             if self.tabela_pronto != []:
                 # print("LEN TROCA1",len(self.tabela_bloq))
-
-                # A MUDANÇA FOI ESSE FOR
-                testador =False
-                for i in self.tabela_pronto:
-                    item = list(filter(lambda x: x.pid == i, self.tabelaProcess))
-                    if item[0].flag_mem == True:
-                        resultado_aloc = aloca_mem_processo_FF(self.memory, len(item[0].vetor_memoria), item[0].pid)
-                        #print("Valor que ta tentando executar de novo:", item[0].pid)
-                        if resultado_aloc[0] == True:
-                            item[0].flag_mem = False
-                            self.num_alocacoes +=1
-                            self.num_nos_percorridos_alocacao += resultado_aloc[1]
-                            self.insere_processo_cpu(item[0].pid)
-                            testador = True
-                            break
-                        elif resultado_aloc[0] == False:
-                            testador = False
-                            self.num_alocacoes_negadas += 1
-                
-                if testador == False:
-                    processos = self.tabelaProcess.copy()
-                    processos = self.escalonamento(processos)
-                    for i in processos:
-                        if i.estado == 0:
-                            self.insere_processo_cpu(i.pid)
-                            # print("LEN TROCA2",len(self.tabela_bloq))
-                            break
+                processos = self.tabelaProcess.copy()
+                processos = self.escalonamento(processos)
+                for i in processos:
+                    if i.estado == 0:
+                        self.insere_processo_cpu(i.pid)
+                        # print("LEN TROCA2",len(self.tabela_bloq))
+                        break
             elif self.tabelaProcess == []:
                 # print("  [*] Não existem mais processos")
                 self.cpu = None
@@ -286,22 +265,15 @@ class Gerenciador(Cpu):
                 # print("PROCESSO EM EXECUÇÃO: ",self.cpu.pid)
                 if aux[0] == 'N': #ISSO AQUI É ADIÇÃO NOVA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     #print("O que gerou foi N")
-                    retorno_aloc = aloca_mem_processo_FF(self.memory, int(aux[1]), self.cpu.pid) #aloca as posições de memória necessária para esse processo
-                    if retorno_aloc[0] == False:
-                        #print("Processo foi bloqueado por falta de memoria")
-                        self.num_alocacoes_negadas += 1
-                        self.novos_valores_processo(estado)
-                        self.tabela_pronto.append(self.cpu.pid)
-                        self.tabela_exec.remove(self.cpu.pid)
-                        self.troca_contexto()
-                    elif retorno_aloc[0] == True:
+                    retorno_aloc = aloca_mem_processo_FF(self.memory, int(aux[1]), self.cpu.pid, self.mem_virtual) #aloca as posições de memória necessária para esse processo
+                    if retorno_aloc[0] == True:
                         self.num_alocacoes += 1 
                         self.num_nos_percorridos_alocacao += retorno_aloc[1]
                 elif aux[0] == 'R':
                     for i in self.tabelaProcess:
                         if i.pid == self.cpu.pid:
                             #print("O que gerou foi R")
-                            frag_livres = desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid) #desaloca o que estava ocupando antes
+                            frag_livres = desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid, self.mem_virtual) #desaloca o que estava ocupando antes
                             self.num_desalocacoes += 1
                             self.num_frag_livres += frag_livres
                             #se não tiver espaço suficiente pras novas instruções, tem que parar de executar
@@ -322,7 +294,7 @@ class Gerenciador(Cpu):
                         if i.pid == self.cpu.pid:
                             p = i
                             break
-                    frag_livres = desaloca_mem_processo(self.memory, len(p.vetor_memoria), p.pid)
+                    frag_livres = desaloca_mem_processo(self.memory, len(p.vetor_memoria), p.pid, self.mem_virtual)
                     self.num_desalocacoes += 1
                     self.num_frag_livres += frag_livres
                     self.troca_contexto()
@@ -341,7 +313,7 @@ class Gerenciador(Cpu):
 
                             self.tabela_final.append(i)
                             #print("O que gerou foi T")
-                            frag_livres = desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid)
+                            frag_livres = desaloca_mem_processo(self.memory, len(i.vetor_memoria), i.pid, self.mem_virtual)
                             self.num_desalocacoes += 1
                             self.num_frag_livres += frag_livres
 
@@ -369,14 +341,8 @@ class Gerenciador(Cpu):
                     self.cpu.pc += int(aux[1]) + 1
 
                     #print("O que gerou foi F")
-                    res_aloca = aloca_mem_processo_FF(self.memory, len(vetor_memoria), novo_pid)
-                    if res_aloca[0] == False:
-                        self.num_alocacoes_negadas += 1
-                        for i in self.tabelaProcess:
-                            if i.pid == novo_pid:
-                                #print("Processo foi bloqueado quando foi criado")
-                                i.flag_mem = True
-                    elif res_aloca[0] == True:
+                    res_aloca = aloca_mem_processo_FF(self.memory, len(vetor_memoria), novo_pid, self.mem_virtual)
+                    if res_aloca[0] == True:
                         self.num_alocacoes += 1 
                         self.num_nos_percorridos_alocacao += res_aloca[1]
                         
@@ -405,11 +371,8 @@ class Gerenciador(Cpu):
                     for i in self.tabelaProcess:
                         if i.pid == aux:
                             i.estado = 0
-                            resultado_aloc = aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid)
-                            if resultado_aloc[0] == False:
-                                i.flag_mem = True
-                                self.num_alocacoes_negadas +=1
-                            elif resultado_aloc[0] == True:
+                            resultado_aloc = aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid, self.mem_virtual)
+                            if resultado_aloc[0] == True:
                                 self.num_nos_percorridos_alocacao += resultado_aloc[1]
                                 self.num_alocacoes +=1
                     self.troca_contexto()
@@ -420,11 +383,8 @@ class Gerenciador(Cpu):
                     for i in self.tabelaProcess:
                         if i.pid == aux:
                             i.estado = 0
-                            resultado_aloc = aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid)
-                            if resultado_aloc[0] == False:
-                                i.flag_mem = True
-                                self.num_alocacoes_negadas += 1
-                            elif resultado_aloc[0] == True:
+                            resultado_aloc = aloca_mem_processo_FF(self.memory, len(i.vetor_memoria), i.pid, self.mem_virtual)
+                            if resultado_aloc[0] == True:
                                 self.num_nos_percorridos_alocacao += resultado_aloc[1]
                                 self.num_alocacoes +=1
 
@@ -477,11 +437,16 @@ class Gerenciador(Cpu):
 
 
                 print(f"  {bcolors.Cyan}[*]{bcolors.Reset} Estado da memória\n")
-
-            
-                print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                
+                # print("Num desalocaoes", self.num_desalocacoes)
+                # print("Num frag", self.num_frag_livres)
+                # print("Num aloc", self.num_alocacoes)
+                # print("Num nos", self.num_nos_percorridos_alocacao)
+                if self.num_desalocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                elif self.num_desalocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}0\n")
                 print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
-                print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
                 count = 0 
                 for i in range(len(self.memory)): 
 
@@ -490,6 +455,10 @@ class Gerenciador(Cpu):
                     if self.memory[i].ocupado == False:
                         print(f"  {bcolors.Branco}Posicao %d esta livre" %count)
                     count +=1
+                count = 0
+                for i in self.mem_virtual:
+                    print(f"  {bcolors.Branco}Posicao %d  da memoria virtual esta ocupada  pelo PID {bcolors.Reset} %d " %(count, i.pid))
+                    count += 1
 
                 
                 print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
@@ -537,12 +506,16 @@ class Gerenciador(Cpu):
                 print(f"  {bcolors.Verde}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
                 print(f"  {bcolors.Cyan}[*]{bcolors.Reset} Parametros de desempenho da memoria\n")
-
+                # print("Num desalocaoes", self.num_desalocacoes)
+                # print("Num frag", self.num_frag_livres)
+                # print("Num aloc", self.num_alocacoes)
+                # print("Num nos", self.num_nos_percorridos_alocacao)
             
-                print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                if self.num_desalocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                elif self.num_desalocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}0\n")
                 print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
-                print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
-
                 
                 print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
