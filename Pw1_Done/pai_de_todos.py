@@ -446,19 +446,26 @@ class Gerenciador(Cpu):
                     print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
                 elif self.num_desalocacoes == 0:
                     print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}0\n")
-                print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                if self.num_alocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                elif self.num_alocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = 0\n")
                 count = 0 
                 for i in range(len(self.memory)): 
 
                     if self.memory[i].ocupado == True:
-                        print(f"  {bcolors.Branco}Posicao %d esta ocupada  pelo PID {bcolors.Reset} %d " %(count, self.memory[i].pid)) 
+                        print(f"  {bcolors.Branco}Posicao %d da memoria esta ocupada  pelo PID {bcolors.Reset} %d " %(count, self.memory[i].pid)) 
                     if self.memory[i].ocupado == False:
-                        print(f"  {bcolors.Branco}Posicao %d esta livre" %count)
+                        print(f"  {bcolors.Branco}Posicao %d da memoria esta livre" %count)
                     count +=1
                 count = 0
-                for i in self.mem_virtual:
-                    print(f"  {bcolors.Branco}Posicao %d  da memoria virtual esta ocupada  pelo PID {bcolors.Reset} %d " %(count, i.pid))
-                    count += 1
+                count = 0
+                if self.mem_virtual != []:
+                    for i in self.mem_virtual:
+                        print(f"  {bcolors.Branco}\nPosicao %d  da memoria virtual esta ocupada  pelo PID {bcolors.Reset} %d " %(count, i.pid))
+                        count += 1
+                else:
+                    print(f"\n  {bcolors.Branco}Memoria virtual esta vazia")
 
                 
                 print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
@@ -515,7 +522,26 @@ class Gerenciador(Cpu):
                     print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
                 elif self.num_desalocacoes == 0:
                     print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}0\n")
-                print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                if self.num_alocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                elif self.num_alocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = 0\n")
+
+                count = 0
+                for i in range(len(self.memory)): 
+
+                    if self.memory[i].ocupado == True:
+                        print(f"  {bcolors.Branco}Posicao %d da memoria esta ocupada  pelo PID {bcolors.Reset} %d " %(count, self.memory[i].pid)) 
+                    if self.memory[i].ocupado == False:
+                        print(f"  {bcolors.Branco}Posicao %d da memoria esta livre" %count)
+                        count +=1
+                count = 0
+                if self.mem_virtual != []:
+                    for i in self.mem_virtual:
+                        print(f"  {bcolors.Branco}\nPosicao %d  da memoria virtual esta ocupada  pelo PID {bcolors.Reset} %d " %(count, i.pid))
+                        count += 1
+                else:
+                    print(f"\n  {bcolors.Branco}Memoria virtual esta vazia")
                 
                 print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
