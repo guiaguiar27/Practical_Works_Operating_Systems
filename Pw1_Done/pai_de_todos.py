@@ -479,9 +479,18 @@ class Gerenciador(Cpu):
                 print(f"  {bcolors.Cyan}[*]{bcolors.Reset} Estado da memória\n")
 
             
-                print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
-                print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
-                print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
+                if self.num_desalocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                elif self.num_desalocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}0\n")
+                if self.num_alocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                elif self.num_alocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset} 0\n")
+                if (self.num_alocacoes_negadas + self.num_alocacoes) > 0:
+                    print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
+                elif (self.num_alocacoes_negadas + self.num_alocacoes) == 0:
+                    print(f"  {bcolors.Branco} Percentual de alocacoes negadas = {bcolors.Reset}0")
                 count = 0 
                 for i in range(len(self.memory)): 
 
@@ -539,10 +548,18 @@ class Gerenciador(Cpu):
                 print(f"  {bcolors.Cyan}[*]{bcolors.Reset} Parametros de desempenho da memoria\n")
 
             
-                print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
-                print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
-                print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
-
+                if self.num_desalocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}%.2f\n" %(self.num_frag_livres/self.num_desalocacoes))
+                elif self.num_desalocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de fragmentos externos = {bcolors.Reset}0\n")
+                if self.num_alocacoes > 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
+                elif self.num_alocacoes == 0:
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset} 0\n")
+                if (self.num_alocacoes_negadas + self.num_alocacoes) > 0:
+                    print(f"  {bcolors.Branco}Percentual de alocacoes negadas = {bcolors.Reset}%.2f\n" %(self.num_alocacoes_negadas/(self.num_alocacoes_negadas + self.num_alocacoes)))
+                elif (self.num_alocacoes_negadas + self.num_alocacoes) == 0:
+                    print(f"  {bcolors.Branco} Percentual de alocacoes negadas = {bcolors.Reset}0")
                 
                 print(f"  {bcolors.Cyan}-----------------------------------------------------------------------------------------------------------------------{bcolors.Reset}\n")
 
