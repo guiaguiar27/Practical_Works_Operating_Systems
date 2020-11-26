@@ -449,7 +449,7 @@ class Gerenciador(Cpu):
                 if self.num_alocacoes > 0:
                     print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
                 elif self.num_alocacoes == 0:
-                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = 0\n")
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}0\n")
                 count = 0 
                 for i in range(len(self.memory)): 
 
@@ -525,7 +525,7 @@ class Gerenciador(Cpu):
                 if self.num_alocacoes > 0:
                     print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}%.2f\n" %(self.num_nos_percorridos_alocacao/self.num_alocacoes))
                 elif self.num_alocacoes == 0:
-                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = 0\n")
+                    print(f"  {bcolors.Branco}Media de nos percorridos na alocacao = {bcolors.Reset}0\n")
 
                 count = 0
                 for i in range(len(self.memory)): 
